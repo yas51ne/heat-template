@@ -1,0 +1,139 @@
+heat_template_version: 2015-04-30
+
+description: Template to deploy attachment between the instances and volume for the infrastructure v0.2
+
+parameters:
+  k8s_master_000_volume_id:
+    type: string
+    description: ID of the Volume.
+  k8s_master_001_volume_id:
+    type: string
+    description: ID of the Volume.
+  k8s_master_002_volume_id:
+    type: string
+    description: ID of the Volume.
+  mongodb_000_volume_id:
+    type: string
+    description: ID of the Volume.
+  mongodb_001_volume_id:
+    type: string
+    description: ID of the Volume.
+  mongodb_002_volume_id:
+    type: string
+    description: ID of the Volume.
+  glusterfs_000_volume_id:
+    type: string
+    description: ID of the Volume.
+  glusterfs_001_volume_id:
+    type: string
+    description: ID of the Volume.
+  jumpbox_volume_id:
+    type: string
+    description: ID of the Volume.
+  k8s_master_000_id:
+    type: string
+    description: ID of the Instance.
+  k8s_master_001_id:
+    type: string
+    description: ID of the Instance.
+  k8s_master_002_id:
+    type: string
+    description: ID of the Instance.
+  mongodb_000_id:
+    type: string
+    description: ID of the Instance.
+  mongodb_001_id:
+    type: string
+    description: ID of the Instance.
+  mongodb_002_id:
+    type: string
+    description: ID of the Instance.
+  glusterfs_000_id:
+    type: string
+    description: ID of the Instance.
+  glusterfs_001_id:
+    type: string
+    description: ID of the Instance.
+  jumpbox_id:
+    type: string
+    description: ID of the Instance.
+
+resources:
+
+  k8s_master_000_volume_attachment:
+    type: OS::Cinder::VolumeAttachment
+    properties:
+      volume_id: { get_param: k8s_master_000_volume_id }
+      instance_uuid: { get_param: k8s_master_000_id }
+  k8s_master_001_volume_attachment:
+    type: OS::Cinder::VolumeAttachment
+    properties:
+      volume_id: { get_param: k8s_master_001_volume_id }
+      instance_uuid: { get_param: k8s_master_001_id }
+  k8s_master_002_volume_attachment:
+    type: OS::Cinder::VolumeAttachment
+    properties:
+      volume_id: { get_param: k8s_master_002_volume_id }
+      instance_uuid: { get_param: k8s_master_002_id }
+
+  mongodb_000_volume_attachment:
+    type: OS::Cinder::VolumeAttachment
+    properties:
+      volume_id: { get_param: mongodb_000_volume_id }
+      instance_uuid: { get_param: mongodb_000_id }
+  mongodb_001_volume_attachment:
+    type: OS::Cinder::VolumeAttachment
+    properties:
+      volume_id: { get_param: mongodb_001_volume_id }
+      instance_uuid: { get_param: mongodb_001_id }
+  mongodb_002_volume_attachment:
+    type: OS::Cinder::VolumeAttachment
+    properties:
+      volume_id: { get_param: mongodb_002_volume_id }
+      instance_uuid: { get_param: mongodb_002_id }
+
+  glusterfs_000_volume_attachment:
+    type: OS::Cinder::VolumeAttachment
+    properties:
+      volume_id: { get_param: glusterfs_000_volume_id }
+      instance_uuid: { get_param: glusterfs_000_id }
+  glusterfs_001_volume_attachment:
+    type: OS::Cinder::VolumeAttachment
+    properties:
+      volume_id: { get_param: glusterfs_001_volume_id }
+      instance_uuid: { get_param: glusterfs_001_id }
+
+  jumpbox_volume_attachment:
+    type: OS::Cinder::VolumeAttachment
+    properties:
+      volume_id: { get_param: jumpbox_volume_id }
+      instance_uuid: { get_param: jumpbox_id }
+
+outputs:
+  k8s_master_000_volume_attachment_info:
+    description: The attachement of the k8s-master-000 volume details
+    value: { get_attr: [ k8s_master_000_volume_attachment, show ] }
+  k8s_master_001_volume_attachment_info:
+    description: The attachement of the k8s-master-001 volume details
+    value: { get_attr: [ k8s_master_001_volume_attachment, show ] }
+  k8s_master_002_volume_attachment_info:
+    description: The attachement of the k8s-master-002 volume details
+    value: { get_attr: [ k8s_master_002_volume_attachment, show ] }
+  mongodb_000_volume_attachment_info:
+    description: The attachement of the Mongodb-000 volume details
+    value: { get_attr: [ mongodb_000_volume_attachment, show ] }
+  mongodb_001_volume_attachment_info:
+    description: The attachement of the Mongodb-001 volume details
+    value: { get_attr: [ mongodb_001_volume_attachment, show ] }
+  mongodb_002_volume_attachment_info:
+    description: The attachement of the Mongodb-002 volume details
+    value: { get_attr: [ mongodb_002_volume_attachment, show ] }
+  glusterfs_000_volume_attachment_info:
+    description: The attachement of the Glusterfs-000 volume details
+    value: { get_attr: [ glusterfs_000_volume_attachment, show ] }
+  glusterfs_001_volume_attachment_info:
+    description: The attachement of the Glusterfs-001 volume details
+    value: { get_attr: [ glusterfs_001_volume_attachment, show ] }
+  jumpbox_volume_attachment_info:
+    description: The attachement of the Jumpbox volume details
+    value: { get_attr: [ jumpbox_volume_attachment, show ] }
