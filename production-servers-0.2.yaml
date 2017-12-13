@@ -237,13 +237,16 @@ resources:
           k8s_master_volume_name: { get_param: k8s_master_volume_name }
           common_secgroup: { get_param: common_secgroup_name }
           k8sm_server_group: { get_resource: server_group_K8sMaster }
-
-  resource_group_K8sSlave:
-    type: OS::Heat::ResourceGroup
+          
+  autoscaling_group_K8sSlave:
+    type: OS::Heat::AutoScalingGroup
     depends_on: [ lb_pool_https, server_group_K8sSlave ]
     properties:
-      count: { get_param: k8s_slave_count }
-      resource_def:
+      cooldown: 60
+      desired_capacity: { get_param: k8s_slave_count }
+      max_size: 15
+      min_size: 3
+      resource:
         type: OS::Nova::Server::K8sSlave
         properties:
           k8s_slave_name: { get_param: k8s_slave_name }
@@ -253,6 +256,49 @@ resources:
           lb_pool_http: { get_resource: lb_pool_http }
           lb_pool_https: { get_resource: lb_pool_https }
           k8ss_server_group: { get_resource: server_group_K8sSlave }
+
+  scaleup_policy:
+    type: OS::Heat::ScalingPolicy
+    properties:
+      adjustment_type: change_in_capacity
+      auto_scaling_group_id: { get_resource: autoscaling_group_K8sSlave }
+      cooldown: 60
+      scaling_adjustment: 1
+
+  scaledown_policy:
+    type: OS::Heat::ScalingPolicy
+    properties:
+      adjustment_type: change_in_capacity
+      auto_scaling_group_id: { get_resource: autoscaling_group_K8sSlave }
+      cooldown: 60
+      scaling_adjustment: -1
+
+  cpu_alarm_high:
+    type: OSE::CES::Alarm
+    properties:
+      meter_name: cpu_util
+      resource_id: { get_resource: autoscaling_group_K8sSlave }
+      statistic: avg
+      period: 300
+      evaluation_periods: 1
+      threshold: 50
+      alarm_actions:
+        - {get_attr: [scaleup_policy, alarm_url]}
+      comparison_operator: gt
+
+  cpu_alarm_low:
+    type: OSE::CES::Alarm
+    properties:
+      meter_name: cpu_util
+      resource_id: { get_resource: autoscaling_group_K8sSlave }
+      statistic: avg
+      period: 300
+      evaluation_periods: 1
+      threshold: 10
+      alarm_actions:
+        - {get_attr: [scaledown_policy, alarm_url]}
+      comparison_operator: lt
+
 
   resource_group_MongoDB:
     type: OS::Heat::ResourceGroup
@@ -294,7 +340,7 @@ outputs:
     value: { get_attr: [ resource_group_K8sMaster, k8sm_instance_info ] }
   K8sSlave_nodes_info:
     description: Hostname and Ip adresses of the Kubernetes slave nodes
-    value: { get_attr: [ resource_group_K8sSlave, k8ss_instance_info ] }
+    value: { get_attr: [ autoscaling_group_K8sSlave, k8ss_instance_info ] }
   GlusterFS_nodes_info:
     description: Hostname and Ip adresses of the GlusterFS nodes
     value: { get_attr: [ resource_group_GlusterFS, glfs_instance_info ] }
