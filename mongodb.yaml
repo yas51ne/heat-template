@@ -1,0 +1,176 @@
+heat_template_version: 2015-04-30
+
+description: Template to deploy a single mongodb instance v0.2
+
+parameters:
+  key_name:
+    type: string
+    label: Key Name
+    default: KeyPair-test-YM
+    description: Name of key-pair to be used for compute instance
+  image_name:
+    type: string
+    label: Image ID
+    default: Standard_CentOS_7.3_latest
+    description: Image to be used for compute instance
+  mongodb_flavor_name:
+    type: string
+    label: Instance Type
+    default: s1.xlarge
+    description: Type of instance (flavor) to be used
+  private_net_name:
+    type: string
+    default: 02178dcd-acc0-4c28-b21d-70bd963c4db0
+    description: Network ID to use for the instance.
+  admin_password:
+    type: string
+    default: e54@Cw5!
+    description: password of the root.
+  mongodb_name:
+    type: string
+    default: k8s-slave
+    description: Name of the Instance.
+  mongodb_volume_size:
+    type: number
+    default: 100
+    description: Size of the Volume.
+  mongodb_volume_name:
+    type: string
+    default: k8s-slave
+    description: Name of the Volume.
+  common_secgroup:
+    type: string
+    default: common-secgroup
+    description: Name of the Common Security Group.
+  mgdb_server_group:
+    type: string
+    default: cws-mgdb-srvgrp
+    description: Name of the MongoDB Server group.
+  dns_domain_name:
+    type: string
+    default: cws.environnement.
+    description: DNS domain name.
+  OS_USERNAME:
+    type: string
+    default: keystoneuser
+    description: OTC API Username.
+  OS_USER_DOMAIN_NAME:
+    type: string
+    default: OTC-EU-DE-00000000001000022981
+    description: OTC API user domain name.
+  OS_DOMAIN_NAME:
+    type: string
+    default: OTC-EU-DE-00000000001000022981
+    description: OTC API domain name.
+  OS_PASSWORD:
+    type: string
+    default: 72riRS24FA
+    description: OTC API password.
+  OS_INTERFACE:
+    type: string
+    default: public
+    description: OTC API interface type.
+  OS_TENANT_NAME:
+    type: string
+    default: eu-de
+    description: OTC API tenant name.
+  OS_PROJECT_NAME:
+    type: string
+    default: eu-de
+    description: OTC API project name.
+  OS_AUTH_URL:
+    type: string
+    default: https://iam.eu-de.otc.t-systems.com:443/v3
+    description: OTC API authentication endpoint.
+  NOVA_ENDPOINT_TYPE:
+    type: string
+    default: publicURL
+    description: OTC NOVA API endpoint type.
+  OS_ENDPOINT_TYPE:
+    type: string
+    default: publicURL
+    description: OTC API endpoint type.
+  CINDER_ENDPOINT_TYPE:
+    type: string
+    default: publicURL
+    description: OTC CINDER API endpoint type.
+  OS_VOLUME_API_VERSION:
+    type: number
+    default: 2
+    description: OTC CINDER API version.
+  OS_IDENTITY_API_VERSION:
+    type: number
+    default: 3
+    description: OTC API authentication version.
+  OS_IMAGE_API_VERSION:
+    type: number
+    default: 2
+    description: OTC GLANCE API version.
+
+resources:
+  mongodb_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_param: private_net_name }
+
+  mongodb_instance:
+    type: OS::Nova::Server
+    properties:
+      name: { get_param: mongodb_name }
+      key_name: { get_param: key_name }
+      admin_pass: { get_param: admin_password }
+      image: { get_param: image_name }
+      flavor: { get_param: mongodb_flavor_name }
+      security_groups:
+      - { get_param: common_secgroup }
+      networks:
+      - port: { get_resource: mongodb_port }
+      scheduler_hints:
+        group: { get_param: mgdb_server_group }
+      user_data:
+        str_replace:
+          template: |
+            #!/bin/bash -v
+            sudo yum install -y otc-tools
+            sudo yum  install -y  python-openstackclient
+            export OS_USERNAME=$OS_USERNAME
+            export OS_USER_DOMAIN_NAME=$OS_USER_DOMAIN_NAME
+            export OS_DOMAIN_NAME=$OS_DOMAIN_NAME
+            export OS_PASSWORD=$OS_PASSWORD
+            export OS_INTERFACE=$OS_INTERFACE
+            export OS_TENANT_NAME=$OS_TENANT_NAME
+            export OS_PROJECT_NAME=$OS_PROJECT_NAME
+            export OS_AUTH_URL=$OS_AUTH_URL
+            export NOVA_ENDPOINT_TYPE=$NOVA_ENDPOINT_TYPE
+            export OS_ENDPOINT_TYPE=$OS_ENDPOINT_TYPE
+            export CINDER_ENDPOINT_TYPE=$CINDER_ENDPOINT_TYPE
+            export OS_VOLUME_API_VERSION=$OS_VOLUME_API_VERSION
+            export OS_IDENTITY_API_VERSION=$OS_IDENTITY_API_VERSION
+            export OS_IMAGE_API_VERSION=$OS_IMAGE_API_VERSION
+            otc domain delrecord $dns $name
+            otc domain addrecord $dns $name.$dns A 300 $mgdb_ip $name
+          params:
+            $mgdb_ip: { get_attr: [ mongodb_port,fixed_ips, 0, ip_address ] }
+            $dns: { get_param: dns_domain_name }
+            $name: { get_param: mongodb_name }
+            $OS_USERNAME: { get_param: OS_USERNAME }
+            $OS_USER_DOMAIN_NAME: { get_param: OS_USER_DOMAIN_NAME }
+            $OS_DOMAIN_NAME: { get_param: OS_DOMAIN_NAME }
+            $OS_PASSWORD: { get_param: OS_PASSWORD }
+            $OS_INTERFACE: { get_param: OS_INTERFACE }
+            $OS_TENANT_NAME: { get_param: OS_TENANT_NAME }
+            $OS_PROJECT_NAME: { get_param: OS_PROJECT_NAME }
+            $OS_AUTH_URL: { get_param: OS_AUTH_URL }
+            $NOVA_ENDPOINT_TYPE: { get_param: NOVA_ENDPOINT_TYPE }
+            $OS_ENDPOINT_TYPE: { get_param: OS_ENDPOINT_TYPE }
+            $CINDER_ENDPOINT_TYPE: { get_param: CINDER_ENDPOINT_TYPE }
+            $OS_VOLUME_API_VERSION: { get_param: OS_VOLUME_API_VERSION }
+            $OS_IDENTITY_API_VERSION: { get_param: OS_IDENTITY_API_VERSION }
+            $OS_IMAGE_API_VERSION: { get_param: OS_IMAGE_API_VERSION }
+
+outputs:
+  mgdb_instance_info:
+    description: The hostname and the IP address of the deployed instance
+    value:
+    - { get_attr: [ mongodb_instance, name ] }
+    - { get_attr: [ mongodb_instance, first_address ] }
