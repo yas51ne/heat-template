@@ -1,0 +1,314 @@
+heat_template_version: 2015-04-30
+
+description: Template to deploy the CWS servers for the production environement v0.2
+
+parameters:
+  public_net:
+    type: string
+    description: >
+      ID or name of public network for which Elastic IP addresses will be allocated
+  dns_servers:
+    type: comma_delimited_list
+    default: ['100.125.4.25','8.8.8.8']
+    description: Comma separated list of DNS nameservers for the private network.
+  vpc_name:
+    type: string
+    default: cws-vpc
+    description: Name of the VPC
+  dns_domain_name:
+    type: string
+    default: cws.environement.
+    description: Name of the DNS Domain
+  private_net_name:
+    type: string
+    default: cws-network
+    description: Name of private network to be created
+  private_subnet_name:
+    type: string
+    default: cws-subnet
+    description: Name of private subnet to be created
+  private_net_cidr:
+    type: string
+    default: 172.16.10.0/24
+    description: Private network address (CIDR notation)
+  private_net_gateway:
+    type: string
+    default: 172.16.0.1
+    description: Private network gateway address
+  private_net_pool_start:
+    type: string
+    default: 172.16.10.100
+    description: Start of private network IP address allocation pool
+  private_net_pool_end:
+    type: string
+    default: 172.16.10.200
+    description: End of private network IP address allocation pool
+  k8s_master_name:
+    type: string
+    default: k8s-master-00%index%
+    description: Name of the K8S Master node.
+  k8s_slave_name:
+    type: string
+    default: k8s-slave-00%index%
+    description: Name of the K8S Slaves node.
+  mongodb_name:
+    type: string
+    default: mongodb-00%index%
+    description: Name of the mongodb node.
+  glusterfs_name:
+    type: string
+    default: glusterfs-00%index%
+    description: Name of the glusterfs node.
+  jumpbox_private_ip:
+    type: string
+    default: 172.16.10.100
+    description: Fixed IP Address for JumpBox.
+  jumpbox_name:
+    type: string
+    default: jumpbox-val
+    description: Name of the JumpBox node.
+  k8s_master_volume_name:
+    type: string
+    default: vol-k8sm-00%index%
+    description: Name of the K8S Master Volume.
+  k8s_slave_volume_name:
+    type: string
+    default: vol-k8ss-00%index%
+    description: Name of the K8S Slaves Volume.
+  mongodb_volume_name:
+    type: string
+    default: vol-mgdb-00%index%
+    description: Name of the Mongodb Volume.
+  glusterfs_volume_name:
+    type: string
+    default: vol-glfs-00%index%
+    description: Name of the Glusterfs Volume.
+  jumpbox_volume_name:
+    type: string
+    default: vol-jumpbox-00%index%
+    description: Name of the JumpBox Volume.
+  common_secgroup_name:
+    type: string
+    default: cws-common-secgrp
+    description: Name of the Common Security group.
+  jumpbox_secgroup_name:
+    type: string
+    default: cws-jmbx-secgrp
+    description: Name of the JumpBox Security group.
+  k8ss_secgroup_name:
+    type: string
+    default: cws-k8ss-secgrp
+    description: Name of the K8S Slaves Security group.
+  lb_name:
+    type: string
+    default: cws-loadbalancer
+    description: Name of the LoadBalancer.
+  k8s_master_count:
+    type: number
+    default: 1
+    description: Number of k8s master nodes.
+  k8s_slave_count:
+    type: number
+    default: 3
+    description: Number of k8s slave nodes.
+  mongodb_count:
+    type: number
+    default: 2
+    description: Number of Mongodb nodes.
+  glusterfs_count:
+    type: number
+    default: 2
+    description: Number of GlusterFS nodes.
+  k8s_master_srvgrp_name:
+    type: string
+    default: cws-k8sm-srvgrp
+    description: Name of the K8S Masters Server group.
+  k8s_slave_srvgrp_name:
+    type: string
+    default: cws-k8ss-srvgrp
+    description: Name of the K8S Slaves Server group.
+  mongodb_srvgrp_name:
+    type: string
+    default: cws-mgdb-srvgrp
+    description: Name of the MongoDB Server group.
+  glusterfs_srvgrp_name:
+    type: string
+    default: cws-glfs-srvgrp
+    description: Name of the GlusterFS Server group.
+
+resources:
+  loadbalancer:
+    type: OS::Neutron::LBaaS::LoadBalancer
+    properties:
+      name: { get_param: lb_name }
+      vip_subnet: { get_param: private_subnet_name }
+
+  lb_floating_ip:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: { get_param: public_net }
+      port_id: { get_attr: [ loadbalancer, vip_port_id ] }
+
+  lb_listener_http:
+    type: OS::Neutron::LBaaS::Listener
+    depends_on: loadbalancer
+    properties:
+      loadbalancer: { get_resource: loadbalancer }
+      protocol: TCP
+      protocol_port: 80
+
+  lb_listener_https:
+    type: OS::Neutron::LBaaS::Listener
+    depends_on: loadbalancer
+    properties:
+      loadbalancer: { get_resource: loadbalancer }
+      protocol: TCP
+      protocol_port: 443
+
+  lb_pool_http:
+    type: OS::Neutron::LBaaS::Pool
+    depends_on: lb_listener_http
+    properties:
+      protocol: TCP
+      lb_algorithm: ROUND_ROBIN
+      listener: { get_resource: lb_listener_http }
+
+  lb_pool_https:
+    type: OS::Neutron::LBaaS::Pool
+    depends_on: lb_listener_https
+    properties:
+      protocol: TCP
+      lb_algorithm: ROUND_ROBIN
+      listener: {get_resource: lb_listener_https}
+
+  lb_monitor_http:
+    type: OS::Neutron::LBaaS::HealthMonitor
+    depends_on: lb_pool_http
+    properties:
+      type: TCP
+      delay: 15
+      max_retries: 5
+      timeout: 10
+      pool: { get_resource: lb_pool_http }
+
+  lb_monitor_https:
+    type: OS::Neutron::LBaaS::HealthMonitor
+    depends_on: lb_pool_https
+    properties:
+      type: TCP
+      delay: 15
+      max_retries: 5
+      timeout: 10
+      pool: { get_resource: lb_pool_https }
+
+  server_group_K8sMaster:
+    type: OS::Nova::ServerGroup
+    properties:
+      name: { get_param: k8s_master_srvgrp_name }
+      policies: [ 'anti-affinity' ]
+
+  server_group_K8sSlave:
+    type: OS::Nova::ServerGroup
+    properties:
+      name: { get_param: k8s_slave_srvgrp_name }
+      policies: [ 'anti-affinity' ]
+
+  server_group_MongoDB:
+    type: OS::Nova::ServerGroup
+    properties:
+      name: { get_param: mongodb_srvgrp_name }
+      policies: [ 'anti-affinity' ]
+
+  server_group_GlusterFS:
+    type: OS::Nova::ServerGroup
+    properties:
+      name: { get_param: glusterfs_srvgrp_name }
+      policies: [ 'anti-affinity' ]
+
+  resource_group_K8sMaster:
+    type: OS::Heat::ResourceGroup
+    depends_on: server_group_K8sMaster
+    properties:
+      count: { get_param: k8s_master_count }
+      resource_def:
+        type: OS::Nova::Server::K8sMaster
+        properties:
+          k8s_master_name: { get_param: k8s_master_name }
+          k8s_master_volume_name: { get_param: k8s_master_volume_name }
+          common_secgroup: { get_param: common_secgroup_name }
+          k8sm_server_group: { get_resource: server_group_K8sMaster }
+
+  resource_group_K8sSlave:
+    type: OS::Heat::ResourceGroup
+    depends_on: [ lb_pool_https, server_group_K8sSlave ]
+    properties:
+      count: { get_param: k8s_slave_count }
+      resource_def:
+        type: OS::Nova::Server::K8sSlave
+        properties:
+          k8s_slave_name: { get_param: k8s_slave_name }
+          k8s_slave_volume_name: { get_param: k8s_slave_volume_name }
+          common_secgroup: { get_param: common_secgroup_name }
+          k8ss_secgroup: { get_param: k8ss_secgroup_name }
+          lb_pool_http: { get_resource: lb_pool_http }
+          lb_pool_https: { get_resource: lb_pool_https }
+          k8ss_server_group: { get_resource: server_group_K8sSlave }
+
+  resource_group_MongoDB:
+    type: OS::Heat::ResourceGroup
+    depends_on: server_group_MongoDB
+    properties:
+      count: { get_param: mongodb_count }
+      resource_def:
+        type: OS::Nova::Server::MongoDB
+        properties:
+          mongodb_name: { get_param: mongodb_name }
+          mongodb_volume_name: { get_param: mongodb_volume_name }
+          common_secgroup: { get_param: common_secgroup_name }
+          mgdb_server_group: { get_resource: server_group_MongoDB }
+
+  resource_group_GlusterFS:
+    type: OS::Heat::ResourceGroup
+    depends_on: server_group_GlusterFS
+    properties:
+      count: { get_param: glusterfs_count }
+      resource_def:
+        type: OS::Nova::Server::GlusterFS
+        properties:
+          glusterfs_name: { get_param: glusterfs_name }
+          glusterfs_volume_name: { get_param: glusterfs_volume_name }
+          common_secgroup: { get_param: common_secgroup_name }
+          glfs_server_group: { get_resource: server_group_GlusterFS }
+
+  JumpBox:
+    type: OS::Nova::Server::JumpBox
+    properties:
+      jumpbox_name: { get_param: jumpbox_name }
+      jumpbox_volume_name: { get_param: jumpbox_volume_name }
+      common_secgroup: { get_param: common_secgroup_name }
+      jumpbox_secgroup: { get_param: jumpbox_secgroup_name }
+
+outputs:
+  K8sMaster_nodes_info:
+    description: Hostname and IP adresses of the Kubernetes master nodes
+    value: { get_attr: [ resource_group_K8sMaster, k8sm_instance_info ] }
+  K8sSlave_nodes_info:
+    description: Hostname and Ip adresses of the Kubernetes slave nodes
+    value: { get_attr: [ resource_group_K8sSlave, k8ss_instance_info ] }
+  GlusterFS_nodes_info:
+    description: Hostname and Ip adresses of the GlusterFS nodes
+    value: { get_attr: [ resource_group_GlusterFS, glfs_instance_info ] }
+  MongoDB_nodes_info:
+    description: Hostname and Ip adresses of the MongoDB nodes
+    value: { get_attr: [ resource_group_MongoDB, mgdb_instance_info ] }
+  JumpBox_nodes_info:
+    description: Hostname and Ip adresses of the JumpBox nodes
+    value: { get_attr: [ JumpBox, jumpbox_instance_info ] }
+  lb_floating_ip:
+    description: Public IP address of the loadbalancer
+    value:
+      - { get_attr: [lb_floating_ip, floating_ip_address] }
+      - { get_attr: [lb_floating_ip, fixed_ip_address] }
+  loadbalancer:
+    description: Private IP address of the loadbalancer
+    value: { get_attr: [loadbalancer, vip_address ] }
