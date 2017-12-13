@@ -37,11 +37,11 @@ parameters:
     description: Jumpbox volume size.
   k8s_master_count:
     type: number
-    default: 1
+    default: 3
     description: Number of k8s master nodes.
   mongodb_count:
     type: number
-    default: 2
+    default: 3
     description: Number of Mongodb nodes.
   glusterfs_count:
     type: number
