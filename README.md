@@ -31,7 +31,7 @@ Update the environment variables OS_USERNAME and OS_PASSWORD in the file keyston
 
 ```
 root]# cd /heat-template/
-heat-template]# vi otcrcscoped
+heat-template]# vi keystoneRCAPI
 ```
 
 Add the execution right to the keystoneRCAPI script.
