@@ -1,0 +1,204 @@
+heat_template_version: 2015-04-30
+
+description: Simple template to deploy a single jumpbox instance v0.2
+
+parameters:
+  public_net:
+    type: string
+    description: ID or name of public network for which Elastic IP addresses will be allocated
+  key_name:
+    type: string
+    label: Key Name
+    default: KeyPair-test-YM
+    description: Name of key-pair to be used for compute instance
+  image_name:
+    type: string
+    label: Image ID
+    default: Standard_CentOS_7.3_latest
+    description: Image to be used for compute instance
+  jumpbox_flavor_name:
+    type: string
+    label: Instance Type
+    default: c1.large
+    description: Type of instance (flavor) to be used
+  private_net_name:
+    type: string
+    default: cws-network
+    description: Network ID to use for the instance.
+  private_subnet_name:
+    type: string
+    default: cws-subnet
+    description: Name of private subnet to be created
+  private_net_cidr:
+    type: string
+    default: 172.16.0.0/16
+    description: Private network address (CIDR notation)
+  admin_password:
+    type: string
+    default: e54@Cw5!
+    description: password of the root.
+  jumpbox_name:
+    type: string
+    default: cws_jumpbox
+    description: Name of the Instance.
+  jumpbox_volume_size:
+    type: number
+    default: 100
+    description: Size of the Volume.
+  jumpbox_volume_name:
+    type: string
+    default: cws_jumpbox
+    description: Name of the Volume.
+  jumpbox_secgroup:
+    type: string
+    default: jumpbox-secgroup
+    description: Name of the JumpBox Security Group.
+  common_secgroup:
+    type: string
+    default: common-secgroup
+    description: Name of the Common Security Group.
+  jumpbox_private_ip:
+    type: string
+    default: 172.16.10.100
+    description: Fixed IP Address for JumpBox.
+  dns_domain_name:
+    type: string
+    default: cws.environnement.
+    description: DNS domain name.
+  USERNAME:
+    type: string
+    default: keystoneuser
+    description: OTC API Username.
+  USER_DOMAIN_NAME:
+    type: string
+    default: OTC-EU-DE-00000000001000022981
+    description: OTC API user domain name.
+  DOMAIN_NAME:
+    type: string
+    default: OTC-EU-DE-00000000001000022981
+    description: OTC API domain name.
+  PASSWORD:
+    type: string
+    default: 72riRS24FA
+    description: OTC API password.
+  INTERFACE:
+    type: string
+    default: public
+    description: OTC API interface type.
+  TENANT_NAME:
+    type: string
+    default: eu-de
+    description: OTC API tenant name.
+  PROJECT_NAME:
+    type: string
+    default: eu-de
+    description: OTC API project name.
+  AUTH_URL:
+    type: string
+    default: https://iam.eu-de.otc.t-systems.com:443/v3
+    description: OTC API authentication endpoint.
+  NOVA_ENDPT_TYPE:
+    type: string
+    default: publicURL
+    description: OTC NOVA API endpoint type.
+  ENDPT_TYPE:
+    type: string
+    default: publicURL
+    description: OTC API endpoint type.
+  CINDER_ENDPT_TYPE:
+    type: string
+    default: publicURL
+    description: OTC CINDER API endpoint type.
+  VOLUME_API_VERSION:
+    type: number
+    default: 2
+    description: OTC CINDER API version.
+  IDENTITY_API_VERSION:
+    type: number
+    default: 3
+    description: OTC API authentication version.
+  IMAGE_API_VERSION:
+    type: number
+    default: 2
+    description: OTC GLANCE API version.
+
+resources:
+  jumpbox_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_param: private_net_name }
+      fixed_ips:
+        - ip_address: { get_param: jumpbox_private_ip }
+
+  jumpbox_floating_ip:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: { get_param: public_net }
+
+  jumpbox_floating_asso:
+    type: OS::Neutron::FloatingIPAssociation
+    depends_on: jumpbox_instance
+    properties:
+      floatingip_id: { get_resource: jumpbox_floating_ip }
+      port_id: { get_resource: jumpbox_port }
+
+  jumpbox_instance:
+    type: OS::Nova::Server
+    properties:
+      name: { get_param: jumpbox_name }
+      key_name: { get_param: key_name }
+      admin_pass: { get_param: admin_password }
+      image: { get_param: image_name }
+      flavor: { get_param: jumpbox_flavor_name }
+      security_groups:
+      - { get_param: common_secgroup }
+      - { get_param: jumpbox_secgroup }
+      networks:
+      - port: { get_resource: jumpbox_port }
+      user_data:
+        str_replace:
+          template: |
+            #!/bin/bash -v
+            sudo yum install -y otc-tools
+            sudo yum  install -y  python-openstackclient
+            export OS_USERNAME=$OS_USERNAME
+            export OS_USER_DOMAIN_NAME=$OS_USER_DOMAIN_NAME
+            export OS_DOMAIN_NAME=$OS_DOMAIN_NAME
+            export OS_PASSWORD=$OS_PASSWORD
+            export OS_INTERFACE=$OS_INTERFACE
+            export OS_TENANT_NAME=$OS_TENANT_NAME
+            export OS_PROJECT_NAME=$OS_PROJECT_NAME
+            export OS_AUTH_URL=$OS_AUTH_URL
+            export NOVA_ENDPOINT_TYPE=$NOVA_ENDPOINT_TYPE
+            export OS_ENDPOINT_TYPE=$OS_ENDPOINT_TYPE
+            export CINDER_ENDPOINT_TYPE=$CINDER_ENDPOINT_TYPE
+            export OS_VOLUME_API_VERSION=$OS_VOLUME_API_VERSION
+            export OS_IDENTITY_API_VERSION=$OS_IDENTITY_API_VERSION
+            export OS_IMAGE_API_VERSION=$OS_IMAGE_API_VERSION
+            otc domain delrecord $dns $name
+            otc domain addrecord $dns $name.$dns A 300 $jmbx_ip $name
+          params:
+            $jmbx_ip: { get_param: jumpbox_private_ip }
+            $dns: { get_param: dns_domain_name }
+            $name: { get_param: jumpbox_name }
+            $OS_USERNAME: { get_param: USERNAME }
+            $OS_USER_DOMAIN_NAME: { get_param: USER_DOMAIN_NAME }
+            $OS_DOMAIN_NAME: { get_param: DOMAIN_NAME }
+            $OS_PASSWORD: { get_param: PASSWORD }
+            $OS_INTERFACE: { get_param: INTERFACE }
+            $OS_TENANT_NAME: { get_param: TENANT_NAME }
+            $OS_PROJECT_NAME: { get_param: PROJECT_NAME }
+            $OS_AUTH_URL: { get_param: AUTH_URL }
+            $NOVA_ENDPOINT_TYPE: { get_param: NOVA_ENDPT_TYPE }
+            $OS_ENDPOINT_TYPE: { get_param: ENDPT_TYPE }
+            $CINDER_ENDPOINT_TYPE: { get_param: CINDER_ENDPT_TYPE }
+            $OS_VOLUME_API_VERSION: { get_param: VOLUME_API_VERSION }
+            $OS_IDENTITY_API_VERSION: { get_param: IDENTITY_API_VERSION }
+            $OS_IMAGE_API_VERSION: { get_param: IMAGE_API_VERSION }
+
+outputs:
+  jumpbox_instance_info:
+    description: The hostname and the IP address of the deployed instance
+    value:
+    - { get_attr: [ jumpbox_instance, name ] }
+    - { get_attr: [ jumpbox_instance, first_address ] }
