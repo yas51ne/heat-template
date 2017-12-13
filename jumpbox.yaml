@@ -9,7 +9,7 @@ parameters:
   key_name:
     type: string
     label: Key Name
-    default: KeyPair-test-YM
+    default: prod-KeyPair
     description: Name of key-pair to be used for compute instance
   image_name:
     type: string
@@ -23,11 +23,11 @@ parameters:
     description: Type of instance (flavor) to be used
   private_net_name:
     type: string
-    default: cws-network
+    default: prod-network
     description: Network ID to use for the instance.
   private_subnet_name:
     type: string
-    default: cws-subnet
+    default: prod-subnet
     description: Name of private subnet to be created
   private_net_cidr:
     type: string
@@ -39,7 +39,7 @@ parameters:
     description: password of the root.
   jumpbox_name:
     type: string
-    default: cws_jumpbox
+    default: prod-jumpbox
     description: Name of the Instance.
   jumpbox_volume_size:
     type: number
@@ -47,7 +47,7 @@ parameters:
     description: Size of the Volume.
   jumpbox_volume_name:
     type: string
-    default: cws_jumpbox
+    default: prod-jumpbox-vol
     description: Name of the Volume.
   jumpbox_secgroup:
     type: string
@@ -63,7 +63,7 @@ parameters:
     description: Fixed IP Address for JumpBox.
   dns_domain_name:
     type: string
-    default: cws.environnement.
+    default: prod.environnement.
     description: DNS domain name.
   USERNAME:
     type: string
@@ -71,15 +71,15 @@ parameters:
     description: OTC API Username.
   USER_DOMAIN_NAME:
     type: string
-    default: OTC-EU-DE-00000000001000022981
+    default: OTC-EU-DE-0000000000
     description: OTC API user domain name.
   DOMAIN_NAME:
     type: string
-    default: OTC-EU-DE-00000000001000022981
+    default: OTC-EU-DE-0000000000
     description: OTC API domain name.
   PASSWORD:
     type: string
-    default: 72riRS24FA
+    default: 
     description: OTC API password.
   INTERFACE:
     type: string
