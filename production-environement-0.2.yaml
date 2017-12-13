@@ -1,0 +1,90 @@
+resource_registry:
+
+    "OS::Nova::Server::K8sMaster": "k8s-master.yaml"
+    "OS::Nova::Server::GlusterFS": "glusterfs.yaml"
+    "OS::Nova::Server::K8sSlave": "k8s-slave.yaml"
+    "OS::Nova::Server::MongoDB": "mongodb.yaml"
+    "OS::Nova::Server::JumpBox": "jumpbox.yaml"
+
+parameter_defaults:
+
+# Connection informations
+  USERNAME: 
+  USER_DOMAIN_NAME: 
+  DOMAIN_NAME: 
+  PASSWORD: 
+
+# Only change these for a different region
+  INTERFACE: public
+  TENANT_NAME: eu-de
+  PROJECT_NAME: eu-de
+  AUTH_URL: https://iam.eu-de.otc.t-systems.com:443/v3
+
+# No changes needed beyond this point
+  NOVA_ENDPT_TYPE: publicURL
+  ENDPT_TYPE: publicURL
+  CINDER_ENDPT_TYPE: publicURL
+  VOLUME_API_VERSION: 2
+  IDENTITY_API_VERSION: 3
+  IMAGE_API_VERSION: 2
+
+#Network parameters
+  public_net: admin_external_net
+  vpc_name: cws-prod-vpc # changing the vpc name value involve changing it in the production-provisionning.sh for the DNS creation
+  dns_domain_name: cws.production. # changing the domain name value involve changing it in the production-provisionning.sh for the DNS creation
+  private_net_name: cws-prod-data-net
+  private_subnet_name: cws-prod-data-subnet
+  private_net_cidr: 172.16.0.0/16
+  private_net_gateway: 172.16.10.1
+  private_net_pool_start: 172.16.10.100
+  private_net_pool_end: 172.16.10.200
+  dns_servers: ['100.125.4.25','8.8.8.8']
+
+#K8S Masters parameters
+  k8s_master_name: cws-prod-k8sm-00%index%
+  k8s_master_volume_size: 50
+  k8s_master_volume_name: cws-prod-vol-k8sm-00%index%
+  k8s_master_flavor_name: c2.large
+  k8s_master_count: 3 # changing the count value involve adding the corresponding Block Storage in the production-provisionning.sh and it's mapping in the production-storage-mapping.yaml
+  k8s_master_srvgrp_name: cws-prod-k8sm-srvgrp
+
+#K8S Slaves parameters
+  k8s_slave_name: cws-prod-k8ss-00%index%
+  k8s_slave_volume_size: 100
+  k8s_slave_volume_name: cws-prod-vol-k8ss-00%index%
+  k8s_slave_flavor_name: c2.2xlarge
+  k8s_slave_count: 5
+  k8s_slave_srvgrp_name: cws-prod-k8ss-srvgrp
+
+#Mongodb parameters
+  mongodb_name: cws-prod-mgdb-00%index%
+  mongodb_volume_size: 100
+  mongodb_volume_name: cws-prod-vol-mgdb-00%index%
+  mongodb_flavor_name: c2.large
+  mongodb_count: 3 # changing the count value involve adding the corresponding Block Storage in the production-provisionning.sh and it's mapping in the production-storage-mapping.yaml
+  mongodb_srvgrp_name: cws-prod-mgdb-srvgrp
+
+#Glusterfs parameters
+  glusterfs_name: cws-prod-glfs-00%index%
+  glusterfs_volume_size: 100
+  glusterfs_volume_name: cws-prod-vol-glfs-00%index%
+  glusterfs_flavor_name: c2.xlarge
+  glusterfs_count: 2 # changing the count value involve adding the corresponding Block Storage in the production-provisionning.sh and it's mapping in the production-storage-mapping.yaml
+  glusterfs_srvgrp_name: cws-prod-glfs-srvgrp
+
+#JumpBox parameters
+  jumpbox_name: cws-prod-jumpbox
+  jumpbox_volume_size: 50
+  jumpbox_volume_name: cws-prod-vol-jumpbox
+  jumpbox_flavor_name: c1.large
+  jumpbox_private_ip: 172.16.10.100
+
+#Common parameters
+  key_name: KEY-keystoneuser
+  image_name: Standard_CentOS_7.3_latest
+  admin_password: e54@Cw5!
+
+#Security Groups
+  common_secgroup_name: cws-prod-common-secgrp
+  jumpbox_secgroup_name: cws-prod-jmbx-secgrp
+  k8ss_secgroup_name: cws-prod-k8ss-secgrp
