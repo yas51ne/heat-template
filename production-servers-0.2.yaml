@@ -1,6 +1,6 @@
 heat_template_version: 2015-04-30
 
-description: Template to deploy the CWS servers for the production environement v0.2
+description: Template to deploy the servers for the production environement v0.2
 
 parameters:
   public_net:
@@ -13,19 +13,19 @@ parameters:
     description: Comma separated list of DNS nameservers for the private network.
   vpc_name:
     type: string
-    default: cws-vpc
+    default: prod-vpc
     description: Name of the VPC
   dns_domain_name:
     type: string
-    default: cws.environement.
+    default: prod.environement.
     description: Name of the DNS Domain
   private_net_name:
     type: string
-    default: cws-network
+    default: prod-network
     description: Name of private network to be created
   private_subnet_name:
     type: string
-    default: cws-subnet
+    default: prod-subnet
     description: Name of private subnet to be created
   private_net_cidr:
     type: string
@@ -89,19 +89,19 @@ parameters:
     description: Name of the JumpBox Volume.
   common_secgroup_name:
     type: string
-    default: cws-common-secgrp
+    default: prod-common-secgrp
     description: Name of the Common Security group.
   jumpbox_secgroup_name:
     type: string
-    default: cws-jmbx-secgrp
+    default: prod-jmbx-secgrp
     description: Name of the JumpBox Security group.
   k8ss_secgroup_name:
     type: string
-    default: cws-k8ss-secgrp
+    default: prod-k8ss-secgrp
     description: Name of the K8S Slaves Security group.
   lb_name:
     type: string
-    default: cws-loadbalancer
+    default: prod-loadbalancer
     description: Name of the LoadBalancer.
   k8s_master_count:
     type: number
@@ -121,19 +121,19 @@ parameters:
     description: Number of GlusterFS nodes.
   k8s_master_srvgrp_name:
     type: string
-    default: cws-k8sm-srvgrp
+    default: prod-k8sm-srvgrp
     description: Name of the K8S Masters Server group.
   k8s_slave_srvgrp_name:
     type: string
-    default: cws-k8ss-srvgrp
+    default: prod-k8ss-srvgrp
     description: Name of the K8S Slaves Server group.
   mongodb_srvgrp_name:
     type: string
-    default: cws-mgdb-srvgrp
+    default: prod-mgdb-srvgrp
     description: Name of the MongoDB Server group.
   glusterfs_srvgrp_name:
     type: string
-    default: cws-glfs-srvgrp
+    default: prod-glfs-srvgrp
     description: Name of the GlusterFS Server group.
 
 resources:
