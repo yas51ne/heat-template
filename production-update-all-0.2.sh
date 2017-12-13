@@ -136,14 +136,20 @@ echo "##########################################################################
 time openstack stack update -t production-storage-mapping-0.2.yaml --parameter=\
 "\
 k8s_master_000_id=$k8s_master_000_id;\
+k8s_master_001_id=$k8s_master_001_id;\
+k8s_master_002_id=$k8s_master_002_id;\
 mongodb_000_id=$mongodb_000_id;\
 mongodb_001_id=$mongodb_001_id;\
+mongodb_002_id=$mongodb_002_id;\
 glusterfs_000_id=$glusterfs_000_id;\
 glusterfs_001_id=$glusterfs_001_id;\
 jumpbox_id=$jumpbox_id;\
 k8s_master_000_volume_id=$k8s_master_000_volume_id;\
+k8s_master_001_volume_id=$k8s_master_001_volume_id;\
+k8s_master_002_volume_id=$k8s_master_002_volume_id;\
 mongodb_000_volume_id=$mongodb_000_volume_id;\
 mongodb_001_volume_id=$mongodb_001_volume_id;\
+mongodb_002_volume_id=$mongodb_002_volume_id;\
 glusterfs_000_volume_id=$glusterfs_000_volume_id;\
 glusterfs_001_volume_id=$glusterfs_001_volume_id;\
 jumpbox_volume_id=$jumpbox_volume_id\
