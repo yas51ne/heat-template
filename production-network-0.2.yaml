@@ -1,6 +1,6 @@
 heat_template_version: 2015-04-30
 
-description: Template to deploy the CWS network for the production environement v0.2
+description: Template to deploy the network for the production environement v0.2
 
 parameters:
   public_net:
@@ -13,19 +13,19 @@ parameters:
     description: Comma separated list of DNS nameservers for the private network.
   vpc_name:
     type: string
-    default: cws-vpc
+    default: prod-vpc
     description: Name of the VPC
   dns_domain_name:
     type: string
-    default: cws.environement.
+    default: prod.environement.
     description: Name of the DNS Domain
   private_net_name:
     type: string
-    default: cws-network
+    default: prod-network
     description: Name of private network to be created
   private_subnet_name:
     type: string
-    default: cws-subnet
+    default: prod-subnet
     description: Name of private subnet to be created
   private_net_cidr:
     type: string
@@ -49,15 +49,15 @@ parameters:
     description: Fixed IP Address for JumpBox.
   common_secgroup_name:
     type: string
-    default: cws-common-secgrp
+    default: common-secgrp
     description: Name of the Common Security group.
   jumpbox_secgroup_name:
     type: string
-    default: cws-jmbx-secgrp
+    default: jmbx-secgrp
     description: Name of the JumpBox Security group.
   k8ss_secgroup_name:
     type: string
-    default: cws-k8ss-secgrp
+    default: k8ss-secgrp
     description: Name of the K8S Slaves Security group.
   lb_name:
     type: string
