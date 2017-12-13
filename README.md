@@ -1,11 +1,11 @@
 # heat-template
-HOT for provisionning HA environement with Kuberbetes, mongodb and glusterfs
-This template help to create an  [production|validation|continuous-integration] Infrastructure version in OpenStack.
+
+This template help to create an production infrastructure in a cloud based on OpenStack in order to deploy a Kuberbetes, mongodb and glusterfs clusters.
 
 
 ## Getting Started
 
-These instructions will get you a copy of the infrastructure up and running in the cloud for [production|validation|continuous-integration] environement. choose the environement you want and folow the bellow instructions of how to provisionne it.
+These instructions will get you a copy of the infrastructure up and running in the cloud for production environement. folow the bellow instructions of how to provisionne it.
 
 
 ### Prerequisites
@@ -49,7 +49,8 @@ heat-template]# . keystoneRCAPI
 ```
 
 ### Provisionning
-#### For a Production environement
+
+#### For a scalable and highly available environement
 ```
 heat-template]# cd production/
 ```
@@ -64,39 +65,6 @@ heat-template/production]# . production-update-all-0.2.sh
 ##### Deleting the environnement
 ```
 heat-template/production]# . production-delete-all-0.2.sh
-```
-
-#### For a Validation environement
-```
-heat-template]# cd validation/
-```
-##### Creationg the environnement
-```
-heat-template/validation]# . validation-provisionning-0.2.sh
-```
-##### Updating the environnement
-```
-heat-template/validation]# . validation-update-all-0.2.sh
-```
-##### Deleting the environnement
-```
-heat-template/validation]# . validation-delete-all-0.2.sh
-```
-#### For a continuous integration environement
-```
-heat-template]# cd continuous-integration/
-```
-##### Creationg the environnement
-```
-heat-template/continuous-integration]# . ci-provisionning-0.2.sh
-```
-##### Updating the environnement
-```
-heat-template/continuous-integration]# . ci-update-all-0.2.sh
-```
-##### Deleting the environnement
-```
-heat-template/continuous-integration]# . ci-delete-all-0.2.sh
 ```
 
 ## Authors
