@@ -48,23 +48,19 @@ Source the keystoneRCAPI file that contain your credentials:
 heat-template]# . keystoneRCAPI
 ```
 
-### Provisionning
+### Provisionning a scalable and highly available environement
 
-#### For a scalable and highly available environement
-```
-heat-template]# cd production/
-```
 ##### Creationg the environnement
 ```
-heat-template/production]# . production-provisionning-0.2.sh
+heat-template]# . production-provisionning-0.2.sh
 ```
 ##### Updating the environnement
 ```
-heat-template/production]# . production-update-all-0.2.sh
+heat-template]# . production-update-all-0.2.sh
 ```
 ##### Deleting the environnement
 ```
-heat-template/production]# . production-delete-all-0.2.sh
+heat-template]# . production-delete-all-0.2.sh
 ```
 
 ## Authors
