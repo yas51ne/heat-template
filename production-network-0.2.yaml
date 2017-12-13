@@ -1,0 +1,150 @@
+heat_template_version: 2015-04-30
+
+description: Template to deploy the CWS network for the production environement v0.2
+
+parameters:
+  public_net:
+    type: string
+    description: >
+      ID or name of public network for which Elastic IP addresses will be allocated
+  dns_servers:
+    type: comma_delimited_list
+    default: ['100.125.4.25','8.8.8.8']
+    description: Comma separated list of DNS nameservers for the private network.
+  vpc_name:
+    type: string
+    default: cws-vpc
+    description: Name of the VPC
+  dns_domain_name:
+    type: string
+    default: cws.environement.
+    description: Name of the DNS Domain
+  private_net_name:
+    type: string
+    default: cws-network
+    description: Name of private network to be created
+  private_subnet_name:
+    type: string
+    default: cws-subnet
+    description: Name of private subnet to be created
+  private_net_cidr:
+    type: string
+    default: 172.16.10.0/24
+    description: Private network address (CIDR notation)
+  private_net_gateway:
+    type: string
+    default: 172.16.0.1
+    description: Private network gateway address
+  private_net_pool_start:
+    type: string
+    default: 172.16.10.100
+    description: Start of private network IP address allocation pool
+  private_net_pool_end:
+    type: string
+    default: 172.16.10.200
+    description: End of private network IP address allocation pool
+  jumpbox_private_ip:
+    type: string
+    default: 172.16.10.100
+    description: Fixed IP Address for JumpBox.
+  common_secgroup_name:
+    type: string
+    default: cws-common-secgrp
+    description: Name of the Common Security group.
+  jumpbox_secgroup_name:
+    type: string
+    default: cws-jmbx-secgrp
+    description: Name of the JumpBox Security group.
+  k8ss_secgroup_name:
+    type: string
+    default: cws-k8ss-secgrp
+    description: Name of the K8S Slaves Security group.
+  lb_name:
+    type: string
+    default: cws-loadbalancer
+    description: Name of the LoadBalancer.
+
+resources:
+  private_network:
+    type: OS::Neutron::Net
+    properties:
+      name: { get_param: private_net_name }
+
+  private_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name: { get_param: private_subnet_name }
+      network_id: { get_resource: private_network }
+      cidr: { get_param: private_net_cidr }
+      gateway_ip: { get_param: private_net_gateway }
+      dns_nameservers: { get_param: dns_servers }
+      allocation_pools:
+        - start: { get_param: private_net_pool_start }
+          end: { get_param: private_net_pool_end }
+
+  router:
+    type: OS::Neutron::Router
+    properties:
+      name: { get_param: vpc_name }
+      external_gateway_info:
+        network: { get_param: public_net }
+        enable_snat: true
+
+  router_interface:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router_id: { get_resource: router }
+      subnet_id: { get_resource: private_subnet }
+
+  common_secgroup:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      name:  { get_param: common_secgroup_name }
+      description: Ping + All TCP and UDP
+      rules:
+      - protocol: icmp
+        remote_mode: remote_group_id
+      - protocol: tcp
+        remote_mode: remote_group_id
+      - protocol: udp
+        remote_mode: remote_group_id
+
+  k8ss_secgroup:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      name: { get_param: k8ss_secgroup_name }
+      description: HTTPS and HTTP
+      rules:
+        - protocol: tcp
+          remote_ip_prefix: 0.0.0.0/0
+          port_range_min: 80
+          port_range_max: 80
+        - protocol: tcp
+          remote_ip_prefix: 0.0.0.0/0
+          port_range_min: 443
+          port_range_max: 443
+
+  jumpbox_secgroup:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      name:  { get_param: jumpbox_secgroup_name }
+      description: SSH HTTP HTTPS
+      rules:
+        - protocol: tcp
+          remote_ip_prefix: 0.0.0.0/0
+          port_range_min: 22
+          port_range_max: 22
+        - protocol: tcp
+          remote_ip_prefix: 0.0.0.0/0
+          port_range_min: 80
+          port_range_max: 80
+        - protocol: tcp
+          remote_ip_prefix: 0.0.0.0/0
+          port_range_min: 443
+          port_range_max: 443
+
+outputs:
+  Network_information:
+    description: Detailed information about the network
+    value: { get_attr: [ private_network, show ] }
+    value: { get_attr: [ private_network, subnets ] }
