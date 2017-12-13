@@ -6,7 +6,7 @@ parameters:
   key_name:
     type: string
     label: Key Name
-    default: KeyPair-test-YM
+    default: prod-KeyPair
     description: Name of key-pair to be used for compute instance
   image_name:
     type: string
@@ -20,7 +20,7 @@ parameters:
     description: Type of instance (flavor) to be used
   private_net_name:
     type: string
-    default: 02178dcd-acc0-4c28-b21d-70bd963c4db0
+    default: prod-network
     description: Network ID to use for the instance.
   admin_password:
     type: string
@@ -44,11 +44,11 @@ parameters:
     description: Name of the Common Security Group.
   k8sm_server_group:
     type: string
-    default: cws-k8sm-srvgrp
+    default: k8sm-srvgrp
     description: Name of the K8S Masters Server group.
   dns_domain_name:
     type: string
-    default: cws.environnement.
+    default: prod.environnement.
     description: DNS domain name.
   OS_USERNAME:
     type: string
@@ -56,15 +56,15 @@ parameters:
     description: OTC API Username.
   OS_USER_DOMAIN_NAME:
     type: string
-    default: OTC-EU-DE-00000000001000022981
+    default: OTC-EU-DE-0000000000
     description: OTC API user domain name.
   OS_DOMAIN_NAME:
     type: string
-    default: OTC-EU-DE-00000000001000022981
+    default: OTC-EU-DE-0000000000
     description: OTC API domain name.
   OS_PASSWORD:
     type: string
-    default: 72riRS24FA
+    default: 
     description: OTC API password.
   OS_INTERFACE:
     type: string
