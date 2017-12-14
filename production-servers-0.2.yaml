@@ -256,7 +256,7 @@ resources:
           lb_pool_http: { get_resource: lb_pool_http }
           lb_pool_https: { get_resource: lb_pool_https }
           k8ss_server_group: { get_resource: server_group_K8sSlave }
-
+          
   scaleup_policy:
     type: OS::Heat::ScalingPolicy
     properties:
@@ -281,7 +281,7 @@ resources:
       statistic: avg
       period: 300
       evaluation_periods: 1
-      threshold: 50
+      threshold: 80
       alarm_actions:
         - {get_attr: [scaleup_policy, alarm_url]}
       comparison_operator: gt
@@ -299,6 +299,57 @@ resources:
         - {get_attr: [scaledown_policy, alarm_url]}
       comparison_operator: lt
 
+  memory_alarm_high:
+    type: OSE::CES::Alarm
+    properties:
+      meter_name: mem_util
+      resource_id: { get_resource: autoscaling_group_K8sSlave }
+      statistic: avg
+      period: 300
+      evaluation_periods: 1
+      threshold: 80
+      alarm_actions:
+        - {get_attr: [scaleup_policy, alarm_url]}
+      comparison_operator: gt
+
+  memory_alarm_low:
+    type: OSE::CES::Alarm
+    properties:
+      meter_name: mem_util
+      resource_id: { get_resource: autoscaling_group_K8sSlave }
+      statistic: avg
+      period: 300
+      evaluation_periods: 1
+      threshold: 10
+      alarm_actions:
+        - {get_attr: [scaledown_policy, alarm_url]}
+      comparison_operator: lt
+
+  inbound_alarm_high:
+    type: OSE::CES::Alarm
+    properties:
+      meter_name: network_incoming_bytes_rate_inband
+      resource_id: { get_resource: autoscaling_group_K8sSlave }
+      statistic: avg
+      period: 300
+      evaluation_periods: 1
+      threshold: 80
+      alarm_actions:
+        - {get_attr: [scaleup_policy, alarm_url]}
+      comparison_operator: gt
+
+  outbound_alarm_high:
+    type: OSE::CES::Alarm
+    properties:
+      meter_name: network_outgoing_bytes_rate_inband
+      resource_id: { get_resource: autoscaling_group_K8sSlave }
+      statistic: avg
+      period: 300
+      evaluation_periods: 1
+      threshold: 80
+      alarm_actions:
+        - {get_attr: [scaleup_policy, alarm_url]}
+      comparison_operator: gt
 
   resource_group_MongoDB:
     type: OS::Heat::ResourceGroup
